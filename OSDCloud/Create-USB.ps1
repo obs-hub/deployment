@@ -147,7 +147,16 @@ if errorlevel 1 (
 Write-Host "Customizing WinPE with drivers and fallback script..." -ForegroundColor Cyan
 Edit-OSDCloudWinPE -StartWebScript $WebScript -DriverPath "C:\Drivers" -CloudDriver "WiFi" -WirelessConnect -Startnet $Startnet
 
-$USBDrives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' -and $_.FileSystemLabel -like "OSDCloud*" }
+do {
+    $USBDrives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' }
+
+    if ($USBDrives.Count -eq 0) {
+        Write-Warning "No USB drive detected. Please insert a USB drive to continue..."
+        Start-Sleep -Seconds 5
+    }
+} while ($USBDrives.Count -eq 0)
+
+$USBDrives = Get-Volume | Where-Object { $_.FileSystemLabel -like "OSDCloud*" }
 if ($USBDrives.Count -eq 0) {
     Write-Host "No OSDCloud USB drives found. Creating new OSDCloud USB..." -ForegroundColor Yellow
     New-OSDCloudUSB
