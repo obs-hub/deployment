@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Updates OSDCloud USB drives after initial setup on a technician PC.
 .DESCRIPTION
@@ -57,7 +57,7 @@ foreach ($Item in $DriverPacks) {
     }
 }
 
-Write-Host "Cleaning unnecessary drivers..." -ForegroundColor Yellow
+Write-Host "Cleaning unnecessary drivers $($RemoveDrivers -join ', ')..." -ForegroundColor Yellow
 # Default Lenovo directory
 $DriversDir = "C:\Drivers\SCCM"
 Get-ChildItem -Path $DriversDir -Recurse -Directory | Where-Object {
@@ -85,7 +85,7 @@ Write-Host "Injecting drivers and fallback script into WinPE..." -ForegroundColo
 Edit-OSDCloudWinPE -StartWebScript $WebScript -DriverPath "C:\Drivers" -CloudDriver "WiFi" -WirelessConnect -Startnet $Startnet
 
 Write-Host "Updating OSDCloud USB..." -ForegroundColor Cyan
-$USBDrives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' -and $_.FileSystemLabel -ne "WINPE" }
+$USBDrives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' -and $_.FileSystemLabel -like "OSDCloud*" }
 if ($USBDrives.Count -eq 0) {
     Write-Host "No OSDCloud USB drives found. Creating new OSDCloud USB..." -ForegroundColor Yellow
     New-OSDCloudUSB
@@ -93,14 +93,8 @@ if ($USBDrives.Count -eq 0) {
     Write-Host "Adding offline Windows image to USB..." -ForegroundColor Cyan
     Update-OSDCloudUSB -OSLanguage en-us -OSActivation Retail
 } else {
-    foreach ($Drive in $USBDrives) {
-        Write-Host "Updating USB Drive: $($Drive.DriveLetter):\ ($($Drive.FileSystemLabel))"  -ForegroundColor Green
-        Update-OSDCloudUSB -OSLanguage en-us -OSActivation Retail
-    }
+    Update-OSDCloudUSB -OSLanguage en-us -OSActivation Retail
 }
-
-Write-Host "Updating OSDCloud USB..." -ForegroundColor Cyan
-Update-OSDCloudUSB -OSLanguage en-us -OSActivation Retail
 #endregion
 
 $Duration = New-TimeSpan -Start $ScriptStartTime -End (Get-Date)
