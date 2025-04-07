@@ -29,10 +29,13 @@ $Global:OSDCloud_Defaults = [ordered]@{
     WindowsDefenderUpdate = $false
     SyncMSUpCatDriverUSB  = $true
     WindowsUpdate         = $true
-    SetTimeZone           = $true
 }
 
-Write-Output $Global:OSDCloud_Defaults
+# Defaults to Overwrite in OSDCloud
+$Global:MyOSDCloud        = @{
+    SetTimeZone           = $true
+    SetWiFi               = $true
+}
 
 # Create 'Start-OSDCloudGUI.json' - During WinPE SystemDrive will be 'X:'
 $OSDCloudGUIjson = New-Item -Path "$($env:SystemDrive)\OSDCloud\Automate\Start-OSDCloudGUI.json" -Force
