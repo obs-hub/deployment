@@ -98,26 +98,36 @@ Write-Host "Downloading Lenovo drivers..." -ForegroundColor Cyan
 Get-LenovoDriverPack -DownloadPath "C:\Drivers"
 
 Write-Host "Expanding driver packs..." -ForegroundColor Cyan
+# Default Lenovo directory
+$DriversDir = "C:\Drivers\SCCM"
 $DriverPacks = Get-ChildItem -Path "C:\Drivers" -File
 foreach ($Item in $DriverPacks) {
     if ($Item.Extension -eq ".exe" -and
         ($Item.VersionInfo.FileDescription -match "Lenovo" -or
          $Item.Name -match "tc_|tp_|ts_|500w|sccm_|m710e|tp10|tp8|yoga")) {
-        Write-Host "Expanding: $($Item.Name)" -ForegroundColor Gray
-        Start-Process -FilePath $Item.FullName -ArgumentList "/SILENT /SUPPRESSMSGBOXES" -Wait
-    } else {
+
+        # Determine the target folder that should be created upon expansion
+        $TargetFolder = Join-Path $DriversDir $Item.BaseName
+
+        if (Test-Path $TargetFolder) {
+            Write-Host "Skipping expansion for $($Item.Name) because folder '$TargetFolder' already exists." -ForegroundColor DarkGray
+        }
+        else {
+            Write-Host "Expanding: $($Item.Name)"
+            Start-Process -FilePath $Item.FullName -ArgumentList "/SILENT /SUPPRESSMSGBOXES" -Wait
+        }
+    }
+    else {
         Write-Host "Skipping non-matching file: $($Item.Name)" -ForegroundColor DarkGray
     }
 }
 
 Write-Host "Cleaning unnecessary drivers: $($DriversToRemove -join ', ')..." -ForegroundColor Yellow
-# Default Lenovo directory
-$DriversDir = "C:\Drivers\SCCM"
 Get-ChildItem -Path $DriversDir -Recurse -Directory | Where-Object {
     $DriversToRemove -contains $_.Name
 } | ForEach-Object {
     Remove-Item -Path $_.FullName -Recurse -Force
-    Write-Host "Removed: $($_.FullName)"
+    Write-Host "Removed: $($_.FullName)" -ForegroundColor Gray
 }
 #endregion
 
