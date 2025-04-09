@@ -112,7 +112,7 @@ Set-OSDCloudWorkspace -WorkspacePath $WorkspacePath
 #region Drivers
 Write-Host "Downloading Lenovo drivers..." -ForegroundColor Cyan
 # Add -Compatible to match this PCs model
-Get-LenovoDriverPack -DownloadPath "C:\Drivers"
+Get-LenovoDriverPackCatalog -DownloadPath "C:\Drivers"
 
 Write-Host "Expanding driver packs..." -ForegroundColor Cyan
 # Default Lenovo directory
