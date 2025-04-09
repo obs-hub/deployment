@@ -39,7 +39,7 @@ function Install-ComponentIfMissing {
         [string]$DisplayNamePattern,
         [string]$DownloadUrl,
         [string]$InstallerPath,
-        [string]$Args,
+        [string[]]$Args,  # Use an array instead of a single string
         [string]$ComponentName
     )
 
@@ -65,13 +65,13 @@ Write-Host "Checking for Windows Assessment and Deployment Kit..." -ForegroundCo
 Install-ComponentIfMissing "Windows Assessment and Deployment Kit*" `
     "https://go.microsoft.com/fwlink/?linkid=2289980" `
     "$env:TEMP\adksetup.exe" `
-    "/quiet /norestart /features OptionId.DeploymentTools" `
+    @("/quiet", "/norestart", "/features OptionId.DeploymentTools") `
     "Windows ADK"
 
 Install-ComponentIfMissing "Windows Assessment and Deployment Kit Windows Preinstallation Environment*" `
     "https://go.microsoft.com/fwlink/?linkid=2289981" `
     "$env:TEMP\adkwinpesetup.exe" `
-    "/quiet /norestart" `
+    @("/quiet", "/norestart") `
     "WinPE Add-on"
 #endregion
 
