@@ -20,6 +20,8 @@ $WebScript = "https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/ma
 # Used to reduce space. Matches using -contains
 $DriversToRemove = @("Audio", "Bluetooth", "Camera", "Security", "Video")
 
+$WorkspacePath = "C:\OSDCloud\Workspace"
+
 $ScriptStartTime = Get-Date
 
 #region CheckAdmin
@@ -42,17 +44,19 @@ function Install-ComponentIfMissing {
     )
 
     if (-not (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
-              Where-Object { $_.DisplayName -match $DisplayNamePattern })) {
+            Where-Object { $_.DisplayName -match $DisplayNamePattern })) {
         Write-Host "$ComponentName not detected, downloading..." -ForegroundColor Yellow
         Invoke-WebRequest -Uri $DownloadUrl -OutFile $InstallerPath -UseBasicParsing
         $process = Start-Process -FilePath $InstallerPath -ArgumentList $Args -Wait -PassThru
         if ($process.ExitCode -eq 0) {
             Write-Host "$ComponentName successfully installed." -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Error "$ComponentName installation failed. Aborting..."
             Exit 1
         }
-    } else {
+    }
+    else {
         Write-Host "$ComponentName already installed." -ForegroundColor Green
     }
 }
@@ -77,7 +81,8 @@ Set-ExecutionPolicy Bypass -Force
 if (-not (Get-InstalledModule -Name "OSD" -ErrorAction SilentlyContinue)) {
     Write-Host "OSD module not found. Installing..." -ForegroundColor Yellow
     Install-Module -Name OSD -Force
-} else {
+}
+else {
     Update-Module -Name OSD -Force
 }
 Import-Module -Name OSD -Force
@@ -88,8 +93,8 @@ if (-not (Test-Path $TemplatePath)) {
     New-OSDCloudTemplate -Name WinRE -WinRE -SetAllIntl en-us
 }
 Write-Host "Refreshing OSDCloud workspace..." -ForegroundColor Cyan
-New-OSDCloudWorkspace -WorkspacePath "C:\OSDCloud\Workspace"
-Set-OSDCloudWorkspace -WorkspacePath "C:\OSDCloud\Workspace"
+New-OSDCloudWorkspace -WorkspacePath $WorkspacePath
+Set-OSDCloudWorkspace -WorkspacePath $WorkspacePath
 #endregion
 
 #region Drivers
@@ -104,7 +109,7 @@ $DriverPacks = Get-ChildItem -Path "C:\Drivers" -File
 foreach ($Item in $DriverPacks) {
     if ($Item.Extension -eq ".exe" -and
         ($Item.VersionInfo.FileDescription -match "Lenovo" -or
-         $Item.Name -match "tc_|tp_|ts_|500w|sccm_|m710e|tp10|tp8|yoga")) {
+        $Item.Name -match "tc_|tp_|ts_|500w|sccm_|m710e|tp10|tp8|yoga")) {
 
         # Determine the target folder that should be created upon expansion
         $TargetFolder = Join-Path $DriversDir $Item.BaseName
@@ -131,6 +136,24 @@ Get-ChildItem -Path $DriversDir -Recurse -Directory | Where-Object {
 }
 #endregion
 
+#region SetupComplete Script
+Write-Host "Creating SetupComplete.ps1..." -ForegroundColor Cyan
+$SetupCompleteContent = @'
+iex (irm  'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/SetupComplete.ps1')
+'@
+
+$SetupCompletePath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.ps1"
+$SetupCompleteContent | Out-File -FilePath $SetupCompletePath -Force
+
+Write-Host "Creating SetupComplete.cmd..." -ForegroundColor Cyan
+$SetupCompleteCMDContent = @'
+%windir%\System32\WindowsPowershell\v1.0\powershell.exe -ExecutionPolicy ByPass -File C:\OSDCloud\Scripts\SetupComplete\SetupComplete.ps1
+'@
+
+$SetupCompleteCMDPath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.cmd"
+$SetupCompleteCMDContent | Out-File -FilePath $SetupCompleteCMDPath -Force
+#endregion
+
 #region StartNet fallback script
 $Startnet = @'
 ping -n 1 google.com | find "TTL=" >nul
@@ -151,7 +174,7 @@ do {
     $USBDrives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' }
 
     if ($USBDrives.Count -eq 0) {
-        Write-Warning "No USB drive detected. Please insert a USB drive to continue..."
+        Write-Warning "No USB drive detected. Please insert a USB drive to continue or CTRL+C to exit..."
         Start-Sleep -Seconds 5
     }
 } while ($USBDrives.Count -eq 0)
