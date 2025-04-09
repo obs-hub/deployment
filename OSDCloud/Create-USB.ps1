@@ -152,21 +152,24 @@ Get-ChildItem -Path $DriversDir -Recurse -Directory | Where-Object {
 #endregion
 
 #region SetupComplete Script
-Write-Host "Creating SetupComplete.ps1..." -ForegroundColor Cyan
-$SetupCompleteContent = @'
-iex (irm  'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/SetupComplete.ps1')
-'@
+Write-Host "Creating SetupComplete files..." -ForegroundColor Cyan
 
-$SetupCompletePath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.ps1"
-$SetupCompleteContent | Out-File -FilePath $SetupCompletePath -Force
+$BatFilePath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.cmd"
+$PSFilePath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.ps1"
+            
+#Create Batch File to Call PowerShell File
+            
+New-Item -Path $BatFilePath -ItemType File -Force
+$CustomActionContent = New-Object system.text.stringbuilder
+[void]$CustomActionContent.Append('%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -File')
+[void]$CustomActionContent.Append(" $PSFilePath")
+Add-Content -Path $BatFilePath -Value $CustomActionContent.ToString()
 
-Write-Host "Creating SetupComplete.cmd..." -ForegroundColor Cyan
-$SetupCompleteCMDContent = @'
-%windir%\System32\WindowsPowershell\v1.0\powershell.exe -ExecutionPolicy ByPass -File C:\OSDCloud\Scripts\SetupComplete\SetupComplete.ps1
-'@
-
-$SetupCompleteCMDPath = "$WorkspacePath\Config\Scripts\SetupComplete\SetupComplete.cmd"
-$SetupCompleteCMDContent | Out-File -FilePath $SetupCompleteCMDPath -Force
+#Create PowerShell File to do actions
+            
+New-Item -Path $PSFilePath -ItemType File -Force
+Add-Content -path $PSFilePath "Set-ExecutionPolicy Bypass -Force -Scope CurrentUser"
+Add-Content -path $PSFilePath "Invoke-Expression (Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/SetupComplete.ps1')"
 #endregion
 
 #region StartNet fallback script
