@@ -39,40 +39,52 @@ function Install-ComponentIfMissing {
         [string]$DisplayNamePattern,
         [string]$DownloadUrl,
         [string]$InstallerPath,
-        [string[]]$Args,  # Use an array instead of a single string
+        [array]$Arguments,
         [string]$ComponentName
     )
 
-    if (-not (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
-            Where-Object { $_.DisplayName -match $DisplayNamePattern })) {
+    $installed = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+        Where-Object { $_.DisplayName -match $DisplayNamePattern }
+
+    if (-not $installed) {
         Write-Host "$ComponentName not detected, downloading..." -ForegroundColor Yellow
         Invoke-WebRequest -Uri $DownloadUrl -OutFile $InstallerPath -UseBasicParsing
-        $process = Start-Process -FilePath $InstallerPath -ArgumentList $Args -Wait -PassThru
-        if ($process.ExitCode -eq 0) {
-            Write-Host "$ComponentName successfully installed." -ForegroundColor Green
-        }
-        else {
-            Write-Error "$ComponentName installation failed. Aborting..."
+
+        if (-not $Arguments -or $Arguments.Count -eq 0) {
+            Write-Error "No arguments provided for $ComponentName installation. Aborting..."
             Exit 1
         }
-    }
-    else {
+        try {
+            $process = Start-Process -FilePath $InstallerPath -ArgumentList $Arguments -Wait -PassThru
+
+            if ($process.ExitCode -eq 0) {
+                Write-Host "$ComponentName successfully installed." -ForegroundColor Green
+            } else {
+                Write-Error "$ComponentName installation failed. Aborting..."
+                Exit 1
+            }
+        }
+        catch {
+            Write-Error "An error occurred while installing $ComponentName $_"
+            Exit 1
+        }
+    } else {
         Write-Host "$ComponentName already installed." -ForegroundColor Green
     }
 }
 
 Write-Host "Checking for Windows Assessment and Deployment Kit..." -ForegroundColor Cyan
-Install-ComponentIfMissing "Windows Assessment and Deployment Kit*" `
-    "https://go.microsoft.com/fwlink/?linkid=2289980" `
-    "$env:TEMP\adksetup.exe" `
-    @("/quiet", "/norestart", "/features OptionId.DeploymentTools") `
-    "Windows ADK"
+Install-ComponentIfMissing -DisplayNamePattern "Windows Assessment and Deployment Kit*" `
+    -DownloadUrl "https://go.microsoft.com/fwlink/?linkid=2289980" `
+    -InstallerPath "$env:TEMP\adksetup.exe" `
+    -Arguments @("/quiet", "/norestart", "/features OptionId.DeploymentTools") `
+    -ComponentName "Windows ADK"
 
-Install-ComponentIfMissing "Windows Assessment and Deployment Kit Windows Preinstallation Environment*" `
-    "https://go.microsoft.com/fwlink/?linkid=2289981" `
-    "$env:TEMP\adkwinpesetup.exe" `
-    @("/quiet", "/norestart") `
-    "WinPE Add-on"
+Install-ComponentIfMissing -DisplayNamePattern "Windows Assessment and Deployment Kit Windows Preinstallation Environment*" `
+    -DownloadUrl "https://go.microsoft.com/fwlink/?linkid=2289981" `
+    -InstallerPath "$env:TEMP\adkwinpesetup.exe" `
+    -Arguments @("/quiet", "/norestart") `
+    -ComponentName "WinPE Add-on"
 #endregion
 
 #region OSDCloud Setup
