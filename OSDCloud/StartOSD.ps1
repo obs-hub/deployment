@@ -34,7 +34,6 @@ $Global:OSDCloud_Defaults = [ordered]@{
 # Defaults to Overwrite in OSDCloud
 $Global:MyOSDCloud        = @{
     SetTimeZone           = $true
-    SetWiFi               = $true
 }
 
 # Create 'Start-OSDCloudGUI.json' - During WinPE SystemDrive will be 'X:'
