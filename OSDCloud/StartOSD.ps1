@@ -32,9 +32,9 @@ $Global:OSDCloud_Defaults = [ordered]@{
 }
 
 # Defaults to Overwrite in OSDCloud
-$Global:MyOSDCloud        = @{
-    SetTimeZone           = $true
-}
+#$Global:MyOSDCloud        = @{
+#    SetTimeZone           = $true
+#}
 
 # Create 'Start-OSDCloudGUI.json' - During WinPE SystemDrive will be 'X:'
 $OSDCloudGUIjson = New-Item -Path "$($env:SystemDrive)\OSDCloud\Automate\Start-OSDCloudGUI.json" -Force
@@ -50,9 +50,21 @@ Write-Host "Adding additional lines to SetupComplete..." -ForegroundColor Cyan
 $PSFilePath = "C:\Windows\Setup\scripts\SetupComplete.ps1"
 
 $InsertCode = @(
-    "Write-Output '=== Pre-Script Setup ==='",
-    "Write-Output 'Waiting for WiFi to connect'",
-    "Start-Sleep -Seconds 120"
+    '$Connected = $false',
+    'for ($i = 0; $i -lt 20; $i++) {',
+    '    if (Test-Connection -ComputerName 8.8.8.8 -Count 1 -Quiet) {',
+    '        $Connected = $true',
+    '        Write-Output "Internet connection detected."',
+    '        break',
+    '    } else {',
+    '        Write-Output "Waiting for WiFi connection... [$i]"',
+    '        Start-Sleep -Seconds 5',
+    '    }',
+    '}',
+    'if (-not $Connected) {',
+    '    Write-Output "Warning: No internet after waiting."',
+    '}',
+    'Write-Output "-------------------------------------------------------------"'
 )
 $ExistingScript = Get-Content -Path $PSFilePath
 
