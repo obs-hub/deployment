@@ -28,10 +28,10 @@ $ScriptStartTime = Get-Date
 $ScriptUrl = 'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/Create-USB.ps1'
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "Script not run as administrator. Relaunching with elevated privileges..."
-    Start-Sleep -Seconds 3
-    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command iex (irm '$ScriptUrl')" -Verb RunAs
-    Exit
+    Write-Warning "Script not run as administrator. Relaunch with elevated privileges..."
+    #Start-Sleep -Seconds 3
+    #Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command iex (irm '$ScriptUrl')" -Verb RunAs
+    #Exit
 }
 #endregion
 
