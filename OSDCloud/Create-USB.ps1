@@ -25,13 +25,12 @@ $WorkspacePath = "C:\OSDCloud\Workspace"
 $ScriptStartTime = Get-Date
 
 #region CheckAdmin
-$scriptUrl = 'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/Create-USB.ps1'
+$ScriptUrl = 'https://raw.githubusercontent.com/obs-hub/deployment/refs/heads/main/OSDCloud/Create-USB.ps1'
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning "Script not run as administrator. Relaunching with elevated privileges..."
-    Start-Sleep -Seconds 1
-    $elevatedCommand = "iex (irm '$scriptUrl')"
-    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `$elevatedCommand" -Verb RunAs
+    Start-Sleep -Seconds 3
+    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command iex (irm '$ScriptUrl')" -Verb RunAs
     Exit
 }
 #endregion
