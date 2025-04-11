@@ -208,6 +208,7 @@ Write-Host "Updating OSDCloud USB..." -ForegroundColor Cyan
 Update-OSDCloudUSB -OSLanguage en-us -OSActivation Retail
 #endregion
 
+Start-Sleep -Seconds 3
 $Duration = New-TimeSpan -Start $ScriptStartTime -End (Get-Date)
 Write-Host ""
 Write-Host "Completed in $($Duration.Minutes) minutes $($Duration.Seconds) seconds." -ForegroundColor Cyan
