@@ -1,4 +1,4 @@
-<#
+Import-Module OBS.PS.Tools.Logging<#
 .SYNOPSIS
     This script attempts to find a matching location ID for the assigned user.
 .DESCRIPTION
@@ -25,8 +25,6 @@ Function Invoke-AutomateLocationSelection {
 		[String] $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutomateLocationSelection-$(Get-Date -Format yyyyMMdd_HHmmss).log"
 	)
 	
-	Import-Module OBS.PS.Tools.Logging
-
 	# Checkl if location is set
 	If ([int]::TryParse([Environment]::GetEnvironmentVariable('AutomateLocationID', 'Machine'), [ref]0)) {
 		Write-Log -L $LogPath -level error "AutomateLocationID already set to $([Environment]::GetEnvironmentVariable('AutomateLocationID', 'Machine'), exiting"
