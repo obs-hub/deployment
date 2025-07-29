@@ -1,3 +1,18 @@
+<#
+.SYNOPSIS
+    This script attempts to find a matching location ID for the assigned user.
+.DESCRIPTION
+    The script checks Intune for the device being provisioned, checks for the assigned user, checks that user's group membership, and assigns an environment variable if found.
+.PARAMETER TenantId
+    365 tenant ID
+.PARAMETER ClientId
+    App ID for app registration in 365 (needs group read and directory read access).
+.PARAMETER ClientSecret
+    Secret credential for app registration.
+.EXAMPLE
+    Invoke-AutomateLocationSelection -TenantId ea1cb72a-3b33-4e53-91e4-7d218e6de36a -ClientId 4198db7a-a383-41b5-b9ff-728e848d8f66 -ClientSecret drtyretwe57yw457uyws453ehdr56yw347ysrtuj
+    This command looks up the location id and assigns it if found.
+#>
 Function Invoke-AutomateLocationSelection {
 	[CmdletBinding(PositionalBinding=$false)]
     param(
