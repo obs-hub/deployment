@@ -47,7 +47,8 @@ Function Invoke-AutomateLocationSelection {
 	$Token = $Connection.access_token
 	
 	$Headers = @{ Authorization = "Bearer $Token" }
-	$Device = Invoke-RestMethod -Headers $Headers -Method GET -Uri "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq 'RED-PF29APS7'" 
+	$Device = Invoke-RestMethod -Headers $Headers -Method GET -Uri "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq '$($env:COMPUTERNAME)'" 
+
 
 	if (-not $Device.value) {
 		Write-Log -L $LogPath -level error "Machine was not found in Intune."
