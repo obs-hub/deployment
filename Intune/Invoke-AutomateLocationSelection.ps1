@@ -19,9 +19,9 @@ Function Invoke-AutomateLocationSelection {
 		[Parameter(Mandatory = $true)]
 		[String] $TenantId,
 		[Parameter(Mandatory = $true)]
-		[String] $ClientId,
+		[String] $AppId,
 		[Parameter(Mandatory = $true)]
-		[String] $ClientSecret,
+		[String] $AppSecret,
 		[String] $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutomateLocationSelection-$(Get-Date -Format yyyyMMdd_HHmmss).log"
 	)
 	Import-Module OBS.PS.Tools.Logging
@@ -35,8 +35,8 @@ Function Invoke-AutomateLocationSelection {
 	$Body = @{
 		Grant_Type = "client_credentials"
 		Scope = "https://graph.microsoft.com/.default"
-		Client_Id = $ClientID
-		Client_Secret = $ClientSecret
+		Client_Id = $AppId
+		Client_Secret = $AppSecret
 	}
 
 	$Connection = Invoke-RestMethod `
