@@ -17,7 +17,7 @@ Function Invoke-AutomateLocationSelection {
 	[CmdletBinding(PositionalBinding=$false)]
     param(
 		[Parameter(Mandatory = $true)]
-		[String] $TenantId,
+		[String] $Tenant,
 		[Parameter(Mandatory = $true)]
 		[String] $AppId,
 		[Parameter(Mandatory = $true)]
