@@ -24,7 +24,6 @@ function Get-AutopilotResults {
 			
 			$logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
 				Where-Object { $_.Name -like "*OSDCloud.log" }
-		}
 		} else {
             Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud logs"
 		}
