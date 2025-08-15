@@ -40,7 +40,7 @@ Function Invoke-AutomateLocationSelection {
 	}
 
 	$Connection = Invoke-RestMethod `
-		-Uri https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token `
+		-Uri https://login.microsoftonline.com/$Tenant/oauth2/v2.0/token `
 		-Method POST `
 		-Body $body
 
