@@ -15,32 +15,30 @@ function Get-AutopilotResults {
     Write-Log -L $LogPath "Script execution started"
 
     try {
+        $attachmentPaths = @()
         # Get OSDCloud logs to attach
-        try{ 
+        If (Test-Path "C:\OSDCloud\Logs") {
+			
 			$logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
 				Where-Object { $_.Name -like "SetupComplete.log" }
-        } catch {
-            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud SetupComplete.log"
-        }
-            
-        try{ 
+			
 			$logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
 				Where-Object { $_.Name -like "*OSDCloud.log" }
-        } catch {
-            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud OSDCloud.log"
-        }
+		}
+		} else {
+            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud logs"
+		}
 
-        try{ 
+		
+        If (Test-Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs") {
 			# Get Lenovo ThinInstaller logs to attach
 			$logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
 				Where-Object { $_.Name -like "*Installation.log" }
-        } catch {
-            
+		} else {
             Write-Log -L $LogPath -Level "warn" "Failed to load ThinInstaller Installation.log"
-        }
+		}
 
         # Combine all log paths into an array
-        $attachmentPaths = @()
         if ($logOSDSetupComplete) { $attachmentPaths += $logOSDSetupComplete.FullName }
         if ($logOSDCloud) { $attachmentPaths += $logOSDCloud.FullName }
         if ($logLenovo) { $attachmentPaths += $logLenovo.FullName }
