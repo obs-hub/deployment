@@ -1,14 +1,3 @@
-function Write-Log {
-    param (
-        [Parameter(Mandatory = $true)] [string] $message,
-        [Parameter(Mandatory = $false)] [string] $logFile = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotDiagnosticsLog.log",
-        [Parameter(Mandatory = $false)] [string] $level = "INFO" # Default log level is INFO
-    )
-    $timestamp = Get-Date -Format 'dd-MMM-yyyy HH:mm:ss'
-    $logMessage = "$timestamp - [$level] - $message"
-    Add-Content -Path $logFile -Value $logMessage
-}
-
 function Get-AutopilotResults {
     param(
         [Parameter(Mandatory = $true)] [string] $appId,
@@ -18,53 +7,65 @@ function Get-AutopilotResults {
         [Parameter(Mandatory = $true)] [string] $from
     )
 
-    $logPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
+    $TranscriptPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\DeploymentResults-Transcript-$(Get-Date -Format yyyyMMdd_HHmmss).log"
+    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\DeploymentResults-$(Get-Date -Format yyyyMMdd_HHmmss).log"
 
     # Start logging
-    Start-Transcript -Path $logPath
-    $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
-    Write-Host "$(Get-Date -Format $dtFormat)"
-    Write-Log -message "Script execution started"
+    Start-Transcript -Path $TranscriptPath
+    Write-Log -L $LogPath "Script execution started"
 
     try {
         # Get OSDCloud logs to attach
-        $logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-            Where-Object { $_.Name -like "SetupComplete.log" }
+        try{ 
+			$logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+				Where-Object { $_.Name -like "SetupComplete.log" }
+        } catch {
+            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud SetupComplete.log"
+        }
             
-        $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-            Where-Object { $_.Name -like "*OSDCloud.log" }
+        try{ 
+			$logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+				Where-Object { $_.Name -like "*OSDCloud.log" }
+        } catch {
+            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud OSDCloud.log"
+        }
 
-        # Get Lenovo ThinInstaller logs to attach
-        $logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
-            Where-Object { $_.Name -like "*Installation.log" }
+        try{ 
+			# Get Lenovo ThinInstaller logs to attach
+			$logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
+				Where-Object { $_.Name -like "*Installation.log" }
+        } catch {
+            
+            Write-Log -L $LogPath -Level "warn" "Failed to load ThinInstaller Installation.log"
+        }
 
         # Combine all log paths into an array
         $attachmentPaths = @()
         if ($logOSDSetupComplete) { $attachmentPaths += $logOSDSetupComplete.FullName }
         if ($logOSDCloud) { $attachmentPaths += $logOSDCloud.FullName }
         if ($logLenovo) { $attachmentPaths += $logLenovo.FullName }
-        $attachmentPaths += $logPath
+        $attachmentPaths += $TranscriptPath
 
         Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
 
         Stop-Transcript
-        Write-Log -message "Autopilot Diagnostic Info gathered and written to log file"
+        Write-Log -L $LogPath "Autopilot Diagnostic Info gathered and written to log file"
     }
     catch [System.IO.IOException] {
-        Write-Log -message "IO Error during script execution: $_" -level "ERROR"
+        Write-Log -L $LogPath "IO Error during script execution: $_" -level "ERROR"
         throw $_
     }
     catch [System.UnauthorizedAccessException] {
-        Write-Log -message "Unauthorized Access Error during script execution: $_" -level "ERROR"
+        Write-Log -L $LogPath "Unauthorized Access Error during script execution: $_" -level "ERROR"
         throw $_
     }
     catch {
-        Write-Log -message "General Error during script execution: $_" -level "ERROR"
+        Write-Log -L $LogPath "General Error during script execution: $_" -level "ERROR"
         throw $_
     }
 
     # Remove the header containing sensitive information from the transcript file before emailing
-    (Get-Content $logPath | Select-Object -Skip 18) | Set-Content $logPath
+    (Get-Content $TranscriptPath | Select-Object -Skip 18) | Set-Content $TranscriptPath
 
     # Split the recipients string into an array
     $recipientsArray = $toRecipients -split ','
@@ -81,9 +82,10 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $from,
         [Parameter(Mandatory = $true)] [string[]] $attachmentPaths # Array of attachment paths
     )
+    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\DeploymentResults-SendEmail-$(Get-Date -Format yyyyMMdd_HHmmss).log"
     
     try {
-        Write-Log -message "Starting email send process"
+        Write-Log -L $LogPath "Starting email send process"
 
         $computerName = (Get-ComputerInfo).csname
         $biosSerialNumber = Get-MyBiosSerialNumber
@@ -100,7 +102,7 @@ function Send-Email {
         
         $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
         $accessToken = $response.access_token
-        Write-Log -message "Access token obtained"
+        Write-Log -L $LogPath "Access token obtained"
 
         # Create the message
         $message = @{
@@ -133,10 +135,10 @@ function Send-Email {
                     ContentBytes  = $attachmentEncoded
                 }
             } else {
-                Write-Log -message "Attachment file not found: $attachmentPath" -level "ERROR"
+                Write-Log -L $LogPath "Attachment file not found: $attachmentPath" -level "ERROR"
             }
         }
-        Write-Log -message "Attachments added to the message"
+        Write-Log -L $LogPath "Attachments added to the message"
 
         # Add each recipient to the toRecipients array
         foreach ($recipient in $toRecipients) {
@@ -146,23 +148,23 @@ function Send-Email {
                 }
             }
         }
-        Write-Log -message "Recipients added to the message"
+        Write-Log -L $LogPath "Recipients added to the message"
 
         # Send the email
         Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$from/sendMail" -Method Post -Headers @{
             Authorization  = "Bearer $accessToken"
             "Content-Type" = "application/json"
         } -Body ($message | ConvertTo-Json -Depth 10)
-        Write-Log -message "Email sent successfully"
+        Write-Log -L $LogPath "Email sent successfully"
     }
     catch [System.Net.WebException] {
-        Write-Log -message "Web Error during email send process: $_" -level "ERROR"
-        Write-Log -message "Status Code: $($_.Response.StatusCode)" -level "ERROR"
-        Write-Log -message "Status Description: $($_.Response.StatusDescription)" -level "ERROR"
+        Write-Log -L $LogPath "Web Error during email send process: $_" -level "ERROR"
+        Write-Log -L $LogPath "Status Code: $($_.Response.StatusCode)" -level "ERROR"
+        Write-Log -L $LogPath "Status Description: $($_.Response.StatusDescription)" -level "ERROR"
         throw $_
     }
     catch {
-        Write-Log -message "General Error during email send process: $_" -level "ERROR"
+        Write-Log -L $LogPath "General Error during email send process: $_" -level "ERROR"
         throw $_
     }
 }
@@ -999,96 +1001,100 @@ Shows the policy details as recorded in the NodeCache registry keys, in the orde
             Write-Host "ESP diagnostics info does not (yet) exist."
         }
 
-        # Display timeline
-        Write-Host ""
-        Write-Host "OBSERVED TIMELINE:" -ForegroundColor Magenta
-        Write-Host ""
+		If (Test-Path "C:\OSDCloud\") {
+				
+					
+			# Display timeline
+			Write-Host ""
+			Write-Host "OBSERVED TIMELINE:" -ForegroundColor Magenta
+			Write-Host ""
 
-        # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
-        $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
-        Sort-Object CreationTime
-
-
-        # SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
-        while ($filesOSD[0].Name -eq "SetupComplete.log") {
-            for ($i = 1; $i -lt $filesOSD.Count; $i++) {
-                $filesOSD[$i].CreationTime = $filesOSD[$i].CreationTime.AddHours(-1)
-                $filesOSD[$i].LastWriteTime = $filesOSD[$i].LastWriteTime.AddHours(-1)
-            }
-            $filesOSD = $filesOSD | Sort-Object CreationTime
-        }
-
-        # Convert dates to UTC and sort
-        $observedTimeline = $observedTimeline | ForEach-Object {
-            $_.Date = [System.TimeZoneInfo]::ConvertTimeToUtc($_.Date)
-            $_
-        } | Sort-Object -Property Date
-
-        $filesOSD = $filesOSD | ForEach-Object {
-            $_.CreationTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.CreationTime)
-            $_.LastWriteTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.LastWriteTime)
-            $_
-        }
-
-        # Calculate the initial time difference in hours
-        $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
-
-        # Determine the adjustment direction based on the time difference
-        $adjustment = if ($timeDifference -gt 1) { -1 } else { 1 }
-
-        # Loop until the absolute time difference is within one hour
-        while (([math]::Abs($timeDifference) -gt 1) -or ($observedTimeline[0].Date -lt $filesOSD[-1].LastWriteTime)) {
-            foreach ($item in $observedTimeline) {
-                $item.Date = $item.Date.AddHours($adjustment)
-            }
-            $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
-        }
-
-        # Create starting point in the timeline
-        $observedTimeline += New-Object PSObject -Property @{
-            "Date"     = $filesOSD[0].CreationTime
-            "Detail"   = "Start Deployment"
-            "Duration" = [TimeSpan]::Zero
-        }
-
-        # Process each log file and add to the timeline
-        foreach ($file in $filesOSD) {
-            $observedTimeline += New-Object PSObject -Property @{
-                Date     = $file.LastWriteTime
-                Detail   = "OSDCloud $($file.BaseName)"
-                Duration = [TimeSpan]::Zero
-                Status   = "Completed"
-            }
-        }
+			# Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
+			$filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+			Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
+			Sort-Object CreationTime
 
 
-        $observedTimeline = $observedTimeline | Sort-Object -Property Date
+			# SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
+			while ($filesOSD[0].Name -eq "SetupComplete.log") {
+				for ($i = 1; $i -lt $filesOSD.Count; $i++) {
+					$filesOSD[$i].CreationTime = $filesOSD[$i].CreationTime.AddHours(-1)
+					$filesOSD[$i].LastWriteTime = $filesOSD[$i].LastWriteTime.AddHours(-1)
+				}
+				$filesOSD = $filesOSD | Sort-Object CreationTime
+			}
 
-        # Calculate durations between events
-        for ($i = 1; $i -lt $observedTimeline.Count; $i++) {
-            if (-not $observedTimeline[$i].PSObject.Properties['Duration']) {
-                $observedTimeline[$i] | Add-Member -MemberType NoteProperty -Name Duration -Value $null
-            }
-            $observedTimeline[$i].Duration = $observedTimeline[$i].Date - $observedTimeline[$i - 1].Date
-        }
+			# Convert dates to UTC and sort
+			$observedTimeline = $observedTimeline | ForEach-Object {
+				$_.Date = [System.TimeZoneInfo]::ConvertTimeToUtc($_.Date)
+				$_
+			} | Sort-Object -Property Date
 
-        # Calculate total elapsed time
-        $totalTimeSpan = $observedTimeline[-1].Date - $observedTimeline[0].Date
+			$filesOSD = $filesOSD | ForEach-Object {
+				$_.CreationTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.CreationTime)
+				$_.LastWriteTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.LastWriteTime)
+				$_
+			}
 
-        # Display the timeline
-        $observedTimeline | Format-Table @{
-            Label      = "Date"
-            Expression = { $_.Date.ToString("G") }
-        }, @{
-            Label      = "Duration"
-            Expression = { $_.Duration.ToString("mm' minutes 'ss' seconds'") }
-        }, @{
-            Label      = "Status"
-            Expression = { $_.Status }
-        }, Detail
+			# Calculate the initial time difference in hours
+			$timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
 
-        Write-Host "Total Elapsed Time: $($totalTimeSpan.ToString("h' hours 'mm' minutes 'ss' seconds'"))"
+			# Determine the adjustment direction based on the time difference
+			$adjustment = if ($timeDifference -gt 1) { -1 } else { 1 }
+
+			# Loop until the absolute time difference is within one hour
+			while (([math]::Abs($timeDifference) -gt 1) -or ($observedTimeline[0].Date -lt $filesOSD[-1].LastWriteTime)) {
+				foreach ($item in $observedTimeline) {
+					$item.Date = $item.Date.AddHours($adjustment)
+				}
+				$timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
+			}
+
+			# Create starting point in the timeline
+			$observedTimeline += New-Object PSObject -Property @{
+				"Date"     = $filesOSD[0].CreationTime
+				"Detail"   = "Start Deployment"
+				"Duration" = [TimeSpan]::Zero
+			}
+
+			# Process each log file and add to the timeline
+			foreach ($file in $filesOSD) {
+				$observedTimeline += New-Object PSObject -Property @{
+					Date     = $file.LastWriteTime
+					Detail   = "OSDCloud $($file.BaseName)"
+					Duration = [TimeSpan]::Zero
+					Status   = "Completed"
+				}
+			}
+
+
+			$observedTimeline = $observedTimeline | Sort-Object -Property Date
+
+			# Calculate durations between events
+			for ($i = 1; $i -lt $observedTimeline.Count; $i++) {
+				if (-not $observedTimeline[$i].PSObject.Properties['Duration']) {
+					$observedTimeline[$i] | Add-Member -MemberType NoteProperty -Name Duration -Value $null
+				}
+				$observedTimeline[$i].Duration = $observedTimeline[$i].Date - $observedTimeline[$i - 1].Date
+			}
+
+			# Calculate total elapsed time
+			$totalTimeSpan = $observedTimeline[-1].Date - $observedTimeline[0].Date
+
+			# Display the timeline
+			$observedTimeline | Format-Table @{
+				Label      = "Date"
+				Expression = { $_.Date.ToString("G") }
+			}, @{
+				Label      = "Duration"
+				Expression = { $_.Duration.ToString("mm' minutes 'ss' seconds'") }
+			}, @{
+				Label      = "Status"
+				Expression = { $_.Status }
+			}, Detail
+
+			Write-Host "Total Elapsed Time: $($totalTimeSpan.ToString("h' hours 'mm' minutes 'ss' seconds'"))"
+		}
     }
 
     End {
