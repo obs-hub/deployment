@@ -4,5 +4,8 @@ function Start-InvocationTest {
         [Parameter(ValueFromRemainingArguments = $true)]
         $Params
     )
+    
+    Get-Module OBS.PS.Tools.Logging -ListAvailable
+    
     Write-Host $Params
     }
