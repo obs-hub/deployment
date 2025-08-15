@@ -21,14 +21,14 @@ Function Write-Log {
 	
 	
     if (-not $LogOnly) {
-		if (-not ($LogLevel.ToLower().Substring(0,1) -eq "d" -and $DebugPreference -ne "Continue")) {
+		if (($LogLevel.ToLower().Substring(0,1) -eq "d" -and $DebugPreference -eq "Continue") -or $LogLevel.ToLower().Substring(0,1) -ne "d") {
 			if ($Text.Length -gt 0) {
 				Write-Host $Text
 			}
 		}
 	}
 	
-	if ($Text.Length -gt 0 -and $LogFile) {
+	if ($Text.Length -gt 0 -and $LogFile) {		
 		$LogOutput = ""
 		$LogEntrySaved = $False
 		$LogEntrySaveRetry = 0
@@ -37,16 +37,16 @@ Function Write-Log {
 			Try {
 				switch ($True) {
 					(Test-Path variable:LogTime) {
-						$Output += "[$([datetime]::Now.ToString($DateTimeFormat))]"
+						$LogOutput += "[$([datetime]::Now.ToString($DateTimeFormat))]"
 					}
 					(Test-Path variable:LogLevel) {
-						$Output += "[$($LogLevel.ToUpper().Substring(0,4))]"
+						$LogOutput += "[$($LogLevel.ToUpper().Substring(0,4))]"
 					}
 					((Test-Path variable:LogTime) -or (Test-Path variable:LogLevel)) {
-						$Output += " "
+						$LogOutput += " "
 					}
 					($True) {
-						$Output += $Text
+						$LogOutput += $Text						
 					}
 				}
 				$LogOutput | Out-File -FilePath $LogFile -Append -ErrorAction Stop -WhatIf:$false
@@ -63,3 +63,4 @@ Function Write-Log {
 }
 
 Export-ModuleMember -Function 'Write-Log'
+
