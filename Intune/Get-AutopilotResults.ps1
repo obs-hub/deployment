@@ -25,7 +25,7 @@ function Get-AutopilotResults {
 			$logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
 				Where-Object { $_.Name -like "*OSDCloud.log" }
 		} else {
-            Write-Log -L $LogPath -Level "warn" "Failed to load OSDCloud logs"
+            Write-Log -L $LogPath -Level "warning" "Failed to load OSDCloud logs"
 		}
 
 		
@@ -34,7 +34,7 @@ function Get-AutopilotResults {
 			$logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
 				Where-Object { $_.Name -like "*Installation.log" }
 		} else {
-            Write-Log -L $LogPath -Level "warn" "Failed to load ThinInstaller Installation.log"
+            Write-Log -L $LogPath -Level "warning" "Failed to load ThinInstaller Installation.log"
 		}
 
         # Combine all log paths into an array
