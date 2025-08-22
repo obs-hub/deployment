@@ -66,7 +66,7 @@ Function Invoke-AutomateLocationSelection {
 
 
 		$Serial = (Get-CimINstance -ClassName Win32_BIOS).SerialNumber
-		Invoke-RestMethod -Headers $Headers -Method GET -Uri "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber, '$Serial')"
+		$AutoPilot = Invoke-RestMethod -Headers $Headers -Method GET -Uri "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber, '$Serial')"
 		if ($AutoPilot.value -and $AutoPilot.value[0].userPrincipalName) {
 			$AssignedUpn = $AutoPilot.value[0].userPrincipalName
 			Write-Log -L $LogPath -level info "Found Autopilot assigned user: $AssignedUpn"
