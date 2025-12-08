@@ -24,6 +24,7 @@ Function Invoke-AutomateLocationSelection {
 		[String] $AppSecret,
 		[String] $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutomateLocationSelection-$(Get-Date -Format yyyyMMdd_HHmmss).log"
 	)
+	
 	Import-Module OBS.PS.Tools.Logging
 
 	Write-Log -L $LogPath "Invoke-AutomateLocationSelection begins for tenant $($Tenant)"
@@ -58,7 +59,6 @@ Function Invoke-AutomateLocationSelection {
 
 	if (-not $Device.value) {
 		Write-Log -L $LogPath -level error "Machine was not found in Intune."
-		throw "Machine was not found in Intune."
 	}
 	$DeviceOwner = $Device.value[0].userId
 	if (-not $DeviceOwner) {		
@@ -76,7 +76,6 @@ Function Invoke-AutomateLocationSelection {
 			$DeviceOwner = $UserLookup.id
 		} else {
 			Write-Log -L $LogPath -level error "No assigned user in Intune or Autopilot."
-			throw "No assigned user in Intune or Autopilot."
 		}
 	}
 		
@@ -85,7 +84,6 @@ Function Invoke-AutomateLocationSelection {
 	
 	if (-not $DeviceOwnerGroup) {
 		Write-Log -L $LogPath -level error "No Intune Site group found for user assigned"
-		throw "No Intune Site group found for user assigned"
 	}
 
 	$DeviceOwnerGroupId = $DeviceOwnerGroup.Id
@@ -95,8 +93,8 @@ Function Invoke-AutomateLocationSelection {
 	
 	$Ref = 0
 	if (-not ([int]::TryParse($LocationId, [ref]$Ref) -and $LocationId -gt 0)) {	
-		Write-Log -L $LogPath -level error "LocationId not found or no location ID set"
-		throw "LocationId not found or no location ID set"
+		Write-Log -L $LogPath -level error "LocationId not found or no location ID set. Setting to AwaitLocationSort group."
+		$LocationId = 103
 	}
  
 	Write-Log -L $LogPath -level info "Found LocationId: $LocationId"
