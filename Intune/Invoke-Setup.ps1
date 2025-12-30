@@ -81,7 +81,7 @@ Function Install-WatchGuard {
     $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
     $installerPath = "$defaultPath\$appName.exe"
     $installer = "$defaultPath\$appName.exe"
-    $url = "https://cdn.watchguard.com/SoftwareCenter/Files/MUVPN_SSL/12_11_4/WG-MVPN-SSL_12_11_4.exe"
+    $url = "https://cdn.watchguard.com/SoftwareCenter/Files/MUVPN_SSL/12_11_5/WG-MVPN-SSL_12_11_5.exe"
     Write-Host "URL to download the installer: $url"
 
     $arguments = @(
