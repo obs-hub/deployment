@@ -9,8 +9,10 @@
 		App ID for app registration in 365 (needs group read and directory read access).
 	.PARAMETER ClientSecret
 		Secret credential for app registration.
+	.PARAMETER DefaultDattoSiteId
+		GUID of default Datto site ID for when a user is unable to be classified, ideally the OnDemand builtin site.
 	.EXAMPLE
-		Invoke-DattoAgentInstall -TenantId ea1cb72a-3b33-4e53-91e4-7d218e6de36a -ClientId 4198db7a-a383-41b5-b9ff-728e848d8f66 -ClientSecret drtyretwe57yw457uyws453ehdr56yw347ysrtuj
+		Invoke-DattoAgentInstall -TenantId ea1cb72a-3b33-4e53-91e4-7d218e6de36a -ClientId 4198db7a-a383-41b5-b9ff-728e848d8f66 -ClientSecret drtyretwe57yw457uyws453ehdr56yw347ysrtuj -DefaultDattoSiteId 34d6eceb-bc7c-4508-8ea6-a0e3bd9acd3f
 		This command looks up the Datto site id and installs the agent.
 #>
 Function Invoke-DattoAgentInstall {
@@ -99,7 +101,7 @@ Function Invoke-DattoAgentInstall {
 	Write-Log -L $LogPath -level info "Found DattoSiteId: $DattoSiteId"
 
 	$AgentURL="https://vidal.rmm.datto.com/download-agent/windows/$($DattoSiteId)"
-	Write-Log -L $LogPath -level info "Full Datto Agent Download URL: $($DattoSiteId)"
+	Write-Log -L $LogPath -level info "Full Datto Agent Download URL: $($AgentURL)"
 	
 	try {
 		(New-Object System.Net.WebClient).DownloadFile($AgentURL, "$env:TEMP\DRMMSetup.exe")
