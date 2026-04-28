@@ -26,6 +26,7 @@ Function Invoke-KonnektInstall {
 
 	$URL="https://trial.konnekt.io/releases/Konnekt-X64-2.12.0.0.Msi"
 	$FilePath = "$env:TEMP\Konnekt-x64.msi"
+	Remove-Item -Path $FilePath -Force
 	Write-Log -L $LogPath -level info "Full Konnekt Download URL: $($URL)"
 	
 	try {
