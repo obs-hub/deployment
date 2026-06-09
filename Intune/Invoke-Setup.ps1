@@ -23,7 +23,10 @@ Function Invoke-Setup {
 
         [Parameter(Position = 2, HelpMessage = "Install or Uninstall")]
         [ValidateSet("Install", "Uninstall")]
-        [string]$invoke = 'Install'
+        [string]$invoke = 'Install',
+
+        [Parameter(Mandatory = $false)]
+        [string]$URL = $null
     )
 
     $defaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
@@ -81,7 +84,9 @@ Function Install-WatchGuard {
     $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
     $installerPath = "$defaultPath\$appName.exe"
     $installer = "$defaultPath\$appName.exe"
-    $url = "https://cdn.watchguard.com/SoftwareCenter/Files/MUVPN_SSL/12_11_5/WG-MVPN-SSL_12_11_5.exe"
+    if ($url -ne $null) {
+        $url = "https://cdn.watchguard.com/SoftwareCenter/Files/MUVPN_SSL/2026_2/WG-MVPN-SSL_2026_2.exe"
+    }
     Write-Host "URL to download the installer: $url"
 
     $arguments = @(
