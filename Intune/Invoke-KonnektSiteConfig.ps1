@@ -5,7 +5,6 @@
 		Invoke-KonnektSiteConfig -SiteURL https://tenantname.sharepoint.com/sites/SiteName/ -SiteTitle "Site Name"
 #>
 Function Invoke-KonnektSiteConfig {
-    # MsiExec.exe /X{13EBE51F-7EF9-4E30-97F3-C53BF333739D} /qn /norestart
 
 	[CmdletBinding(PositionalBinding=$false)]
 	param(
@@ -58,7 +57,7 @@ Function Invoke-KonnektSiteConfig {
 	}
 	
 	# Check if the Konnekt registry DWord to enable managed site mappings exists, create it if not. Note this DWORD shares the same name as the Site List key, this is expected.
-	if (-not (Get-ItemPropertyValue -Path $KonnektConfig -Name "SharepointSites" -ErrorAction SilentlyContinue)) {
+	if ( -not (Get-ItemPropertyValue -Path $KonnektConfig -Name "SharepointSites" -ErrorAction SilentlyContinue)) {
 		Write-Log -L $LogPath -level debug "Konnekt manual mapping enablement registry DWORD not present, creating"
 		New-ItemProperty -Path $KonnektConfig -Name "SharepointSites" -Value 1 -PropertyType DWord | Out-Null
 	}
