@@ -41,7 +41,7 @@ Function Invoke-KonnektSiteConfig {
 
 	Write-Log -L $LogPath "Invoke-KonnektSiteConfig (Site: $($SiteTitle)) begins"
 	
-	If (Get-Service konnektUpdate -ErrorAction SilentlyContinue) {
+	If ((Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*Konnekt*" }).Count -eq 0) {
 		Write-Log -L $LogPath -level warning "Konnekt Agent is not installed on this device. Configuration is continuing, but site will not map without Konnekt Agent."
 	} 
 	
