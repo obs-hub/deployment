@@ -57,13 +57,13 @@ Function Invoke-KonnektSiteConfig {
 	}
 	
 	# Check if the Konnekt registry DWord to enable managed site mappings exists, create it if not. Note this DWORD shares the same name as the Site List key, this is expected.
-	if ( -not (Get-ItemPropertyValue -Path $KonnektConfig -Name "SharepointSites" -ErrorAction SilentlyContinue)) {
+	if ( -not (Get-ItemProperty -Path $KonnektConfig -Name "SharepointSites" -ErrorAction SilentlyContinue)) {
 		Write-Log -L $LogPath -level debug "Konnekt manual mapping enablement registry DWORD not present, creating"
 		New-ItemProperty -Path $KonnektConfig -Name "SharepointSites" -Value 1 -PropertyType DWord | Out-Null
 	}
 	
 	# Check if the Konnekt registry string to map the requested site exists, create it if not.
-	if (-not (Get-ItemPropertyValue -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -ErrorAction SilentlyContinue)) {
+	if (-not (Get-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -ErrorAction SilentlyContinue)) {
 		# No corresponding registry value exists
 		Write-Log -L $LogPath -level debug "Konnekt site config registry String not present, creating"
 		New-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString -PropertyType String | Out-Null
