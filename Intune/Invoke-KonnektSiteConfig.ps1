@@ -66,16 +66,17 @@ Function Invoke-KonnektSiteConfig {
 	if (-not (Get-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -ErrorAction SilentlyContinue)) {
 		# No corresponding registry value exists
 		Write-Log -L $LogPath -level debug "Konnekt site config registry String not present, creating"
-		New-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString -PropertyType String | Out-Null
+		New-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString -PropertyType String
 	} elseif ((Get-ItemPropertyValue -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -ErrorAction SilentlyContinue) -ne $KonnektSiteConfigString) {
 		# The registry value exists, but it is incorrect
 		Write-Log -L $LogPath -level debug "Konnekt site config registry String is present but incorrect"
-		Set-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString | Out-Null
+        Set-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString
 	} else {
 		# The registry value exists, no action needed
 		Write-Log -L $LogPath -level warning "Konnekt Site $($SiteTitle) already exists."
+
 	}
-	
+	Write-Log -L $LogPath -level debug "Registry path:$KonnektSiteListConfig Registry name:$KonnektSiteConfigString Registry value:$(Get-ItemPropertyValue -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -ErrorAction SilentlyContinue)  "
 	Write-Log -L $LogPath -level info "Konnekt Site $($SiteTitle) installation completed."
 
 }
