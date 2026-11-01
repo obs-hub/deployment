@@ -2,7 +2,6 @@
     .SYNOPSIS
     .DESCRIPTION
     .EXAMPLE
-        Invoke-KonnektSiteConfig -SiteURL https://tenantname.sharepoint.com/sites/SiteName/ -SiteTitle "Site Name"
 #>
 Function Invoke-KonnektSiteAutoConfig {
 
@@ -108,14 +107,9 @@ Function Invoke-KonnektSiteAutoConfig {
 	$KonnektSiteName = $KonnektSiteConfigString
 	$KonnektSiteValue = $KonnektSiteConfigString
 	
-    if ($RemoveSite.IsPresent) {
-        
-        Write-Log -L $LogPath "Invoke-KonnektSiteConfig REMOVAL (Site: $($SpTitle)) begins"
-        # Check if the Konnekt registry DWord to map the requested site exists, create it if not.
-        if ((Get-ItemPropertyValue -Path $KonnektSiteListPath -Name $KonnektSiteName -ErrorAction SilentlyContinue)) {
-            Write-Log -L $LogPath -level debug "Konnekt site config registry DWORD present, removing"
-            Remove-ItemProperty -Path $KonnektSiteListPath -Name $KonnektSiteName | Out-Null
-        }
+    if ($RemoveSite.IsPresent) {        
+        Write-Log -L $LogPath "Invoke-KonnektSiteConfig REMOVAL Path:$KonnektSiteListPath Name:$KonnektSiteName"
+		Remove-ItemProperty -Path $KonnektSiteListPath -Name $KonnektSiteName | Out-Null
         exit 0
     }
 
