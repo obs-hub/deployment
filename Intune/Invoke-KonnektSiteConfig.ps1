@@ -14,7 +14,7 @@ Function Invoke-KonnektSiteConfig {
 		[string] $SiteTitle,
 		[string] $SiteDriveLetter = $null,
 		[switch] $RemoveSite,
-		[String] $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\KonnektInstall-$(Get-Date -Format yyyyMMdd_HHmmss).log"
+		[String] $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\Konnekt$($SiteTitle)Install-$(Get-Date -Format yyyyMMdd_HHmmss).log"
 	)
 	
 	Import-Module OBS.PS.Tools.Logging
