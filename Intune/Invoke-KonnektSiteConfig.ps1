@@ -73,7 +73,7 @@ Function Invoke-KonnektSiteConfig {
 		Set-ItemProperty -Path $KonnektSiteListConfig -Name $KonnektSiteConfigString -Value $KonnektSiteConfigString | Out-Null
 	} else {
 		# The registry value exists, no action needed
-		Write-Log -L $LogPath -level warn "Konnekt Site $($SiteTitle) already exists."
+		Write-Log -L $LogPath -level warning "Konnekt Site $($SiteTitle) already exists."
 	}
 	
 	Write-Log -L $LogPath -level info "Konnekt Site $($SiteTitle) installation completed."
