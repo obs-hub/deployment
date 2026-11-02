@@ -235,7 +235,7 @@ public static class WtsSessionHelper {
 		try {
 			if ($RemoveSite) {
 				if ($null -ne (Get-ItemProperty -Path $SiteListPath -Name $SiteValue -ErrorAction SilentlyContinue)) {
-					Remove-ItemProperty -Path $SiteListPath -Name $SiteValue
+					Remove-ItemProperty -Path $SiteListPath -Name $SiteValue -ErrorAction SilentlyContinue
 					Write-Log -L $LogPath -Level info "Removed site $SpTitle for SID $($Sid)"
 				}
 				else {
@@ -243,12 +243,17 @@ public static class WtsSessionHelper {
 				}
 				continue
 			}
-
 			Write-Log -L $LogPath "Installing site $SpTitle for SID $($Sid)"
 
 			# -Force creates the parent Konnekt key as well if it is missing
 			if (-not (Test-Path -Path $SiteListPath)) {
 				New-Item -Path $SiteListPath -Force | Out-Null
+			} else {
+			
+				if ($null -ne (Get-ItemProperty -Path $SiteListPath -Name "*Accounting|*" -ErrorAction SilentlyContinue)) {
+			        Remove-ItemProperty -Path $SiteListPath -Name "*Accounting|*" -ErrorAction SilentlyContinue
+					Write-Log -L $LogPath -Level info "RECONCILITION: Removed old accounting entry for SID $($Sid)"
+				}
 			}
 
 			# The enablement DWORD SharePoint sites allows multiple site mappings under the SharepointSites path. The DWORD and the path are the same, this is expected
@@ -271,6 +276,11 @@ public static class WtsSessionHelper {
 			throw "Failed to update Konnekt site $SpTitle for SID $($Sid): $($_.Exception.Message)"
 		}
 	}
+
+	# Reconcile changes in Nov 26 
+	New-Item -Path "HKLM:\SOFTWARE\Policies\GlueckKanja\Konnekt" -Force | Out-Null
+	New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\GlueckKanja\Konnekt" -Name 'EnhancedOAuth' -PropertyType 'DWORD' -Value 1 -Force | Out-Null
+	# End Reconcile changes in Nov 26 
 
     Write-Log -L $LogPath -Level info "Konnekt site $SpTitle $(if ($RemoveSite) { 'removal' } else { 'installation' }) completed."
 }
